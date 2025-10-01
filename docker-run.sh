@@ -79,6 +79,7 @@ rm -f /tmp/pg_status /tmp/redis_status
 
 echo "✅ Infraestrutura pronta!"
 echo "🚀 Iniciando aplicação..."
+docker-compose down
 docker compose up -d app >/dev/null 2>&1
 
 app_ready=false

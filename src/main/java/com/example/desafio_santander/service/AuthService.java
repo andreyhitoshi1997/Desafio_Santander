@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final JwtUtil jwtUtil;
 
-    @Value("${app.auth.username:admin}")
+    @Value("${app.auth.username}")
     private String defaultUsername;
 
-    @Value("${app.auth.password:admin123}")
+    @Value("${app.auth.password}")
     private String defaultPassword;
 
     @Autowired
