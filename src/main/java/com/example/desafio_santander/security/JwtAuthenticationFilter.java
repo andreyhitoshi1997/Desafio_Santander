@@ -32,16 +32,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
-            username = jwtUtil.getUsernameFromToken(jwt);
+            try {
+                username = jwtUtil.getUsernameFromToken(jwt);
+            } catch (Exception e) {
+                // Log the error but continue with the filter chain
+                logger.warn("Invalid JWT token: " + e.getMessage());
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            try {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                if (jwtUtil.validateToken(jwt)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } catch (Exception e) {
+                logger.warn("Error during authentication: " + e.getMessage());
             }
         }
         filterChain.doFilter(request, response);

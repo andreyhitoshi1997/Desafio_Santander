@@ -27,7 +27,7 @@ public class AgenciaController {
         }
     }
 
-    @GetMapping("/consultar")
+    @GetMapping("/distancia")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AgenciaResponseDTO> consultarAgencias() {
         try {
