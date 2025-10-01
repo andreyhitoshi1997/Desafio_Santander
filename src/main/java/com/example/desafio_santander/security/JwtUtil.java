@@ -11,7 +11,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private final long expiration = 1000 * 60 * 60; // 1 hour
+    private final long expiration = 1000 * 60 * 60;
 
     public String generateToken(String username) {
         return Jwts.builder()
@@ -35,5 +35,10 @@ public class JwtUtil {
             return false;
         }
     }
-}
 
+    public boolean isTokenExpired(String token) {
+        Date expiration = Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token).getBody().getExpiration();
+        return expiration.before(new Date());
+    }
+}

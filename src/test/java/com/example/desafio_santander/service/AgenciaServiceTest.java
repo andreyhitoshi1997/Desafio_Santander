@@ -51,6 +51,8 @@ class AgenciaServiceTest {
 
         AgenciaResponseDTO result = agenciaService.cadastrarAgencia(dto);
 
+        assertNotNull(result);
+        assertNotNull(result.getMessage());
         assertTrue(result.getMessage().contains("Agência cadastrada com sucesso"));
         assertTrue(result.getMessage().contains("1"));
         verify(agenciaRepository).save(any(Agencia.class));
@@ -70,7 +72,9 @@ class AgenciaServiceTest {
         AgenciaResponseDTO result = agenciaService.consultarAgencias();
 
         assertNotNull(result);
+        assertNotNull(result.getMessage());
         assertTrue(result.getMessage().contains("2 agências encontradas"));
+        assertTrue(result.getMessage().contains("fresh + cache"));
     }
 
     @Test
@@ -82,7 +86,9 @@ class AgenciaServiceTest {
         AgenciaResponseDTO result = agenciaService.consultarAgencias();
 
         assertNotNull(result);
+        assertNotNull(result.getMessage());
         assertTrue(result.getMessage().contains("agências encontradas"));
+        assertTrue(result.getMessage().contains("cache"));
     }
 
     @Test
@@ -95,6 +101,8 @@ class AgenciaServiceTest {
         AgenciaResponseDTO result = agenciaService.consultarAgencias();
 
         assertNotNull(result);
+        assertNotNull(result.getMessage());
         assertTrue(result.getMessage().contains("1 agências encontradas"));
+        assertTrue(result.getMessage().contains("fresh + cache"));
     }
 }

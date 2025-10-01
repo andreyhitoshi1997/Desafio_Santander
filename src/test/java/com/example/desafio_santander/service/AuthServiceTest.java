@@ -29,14 +29,12 @@ class AuthServiceTest {
 
         when(jwtUtil.generateToken(anyString())).thenReturn(mockToken);
 
-        try {
-            AuthResponseDTO result = authService.authenticate(validUser, validPassword);
-            assertNotNull(result);
-            assertNotNull(result.getBearer());
-        } catch (Exception e) {
-            // Se houver erro, pelo menos verificamos que o método existe
-            assertTrue(true);
-        }
+        AuthResponseDTO result = authService.authenticate(validUser, validPassword);
+
+        assertNotNull(result);
+        assertNotNull(result.getBearer());
+        assertTrue(result.getBearer().startsWith("Bearer "));
+        assertTrue(result.getBearer().contains(mockToken));
     }
 
     @Test
@@ -54,16 +52,9 @@ class AuthServiceTest {
     }
 
     @Test
-    void testAuthenticateNullCredentials() {
+    void testAuthenticateInvalidCredentials() {
         assertThrows(RuntimeException.class, () -> {
-            authService.authenticate(null, null);
-        });
-    }
-
-    @Test
-    void testAuthenticateEmptyCredentials() {
-        assertThrows(RuntimeException.class, () -> {
-            authService.authenticate("", "");
+            authService.authenticate("invalid", "invalid");
         });
     }
 }

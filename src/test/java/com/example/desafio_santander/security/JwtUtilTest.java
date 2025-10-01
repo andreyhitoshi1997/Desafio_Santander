@@ -54,14 +54,21 @@ class JwtUtilTest {
     }
 
     @Test
-    void testTokenRoundTrip() {
+    void testIsTokenExpiredFresh() {
         String username = "testuser";
-
         String token = jwtUtil.generateToken(username);
-        String extractedUsername = jwtUtil.getUsernameFromToken(token);
-        boolean isValid = jwtUtil.validateToken(token);
 
-        assertEquals(username, extractedUsername);
-        assertTrue(isValid);
+        boolean isExpired = jwtUtil.isTokenExpired(token);
+
+        assertFalse(isExpired);
+    }
+
+    @Test
+    void testIsTokenExpiredInvalidToken() {
+        String invalidToken = "invalid.token.here";
+
+        assertThrows(Exception.class, () -> {
+            jwtUtil.isTokenExpired(invalidToken);
+        });
     }
 }

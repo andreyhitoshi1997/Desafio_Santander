@@ -29,7 +29,6 @@ public class AgenciaService {
     private static final int MAX_CONSULTAS = 10;
     private static final int CACHE_TIMEOUT_MINUTES = 5;
 
-    // Cache em memória como fallback
     private List<AgenciaDTO> memoryCache = null;
     private long memoryCacheTime = 0;
     private long consultasCounter = 0;
@@ -39,7 +38,6 @@ public class AgenciaService {
             Agencia agencia = new Agencia(null, dto.getPosX(), dto.getPosY());
             Agencia savedAgencia = agenciaRepository.save(agencia);
 
-            // Limpar cache (Redis ou memória)
             if (redisTemplate != null) {
                 redisTemplate.delete(CACHE_KEY);
                 redisTemplate.delete(COUNTER_KEY);
@@ -49,10 +47,9 @@ public class AgenciaService {
             }
 
             String message = String.format("Agência cadastrada com sucesso, %s", savedAgencia.getId());
-
             return new AgenciaResponseDTO(message);
         } catch (Exception e) {
-            throw new AgenciaCadastroException("Erro ao salvar agência no banco de dados", e);
+            throw new AgenciaCadastroException("Erro ao cadastrar agência: " + e.getMessage());
         }
     }
 
@@ -66,76 +63,61 @@ public class AgenciaService {
 
     private AgenciaResponseDTO consultarComRedis() {
         Long consultas = redisTemplate.opsForValue().increment(COUNTER_KEY);
-        if (consultas != null && consultas == 1) {
+        if (consultas == 1) {
             redisTemplate.expire(COUNTER_KEY, CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
         }
 
-        boolean cacheRenovado = false;
-        List<AgenciaDTO> agencias;
+        boolean renovarPorHits = consultas >= MAX_CONSULTAS;
+        boolean temCache = Boolean.TRUE.equals(redisTemplate.hasKey(CACHE_KEY));
 
-        if (consultas != null && consultas >= MAX_CONSULTAS || !redisTemplate.hasKey(CACHE_KEY)) {
-            agencias = renovarCache();
-            cacheRenovado = true;
-            redisTemplate.delete(COUNTER_KEY);
-        } else {
-            @SuppressWarnings("unchecked")
-            List<AgenciaDTO> cachedAgencias = (List<AgenciaDTO>) redisTemplate.opsForValue().get(CACHE_KEY);
-            agencias = cachedAgencias != null ? cachedAgencias : renovarCache();
+        if (temCache && !renovarPorHits) {
+            Object cachedData = redisTemplate.opsForValue().get(CACHE_KEY);
+            if (cachedData instanceof List<?> list) {
+                @SuppressWarnings("unchecked")
+                List<AgenciaDTO> agencias = (List<AgenciaDTO>) list;
+                String message = String.format("Consulta realizada às %s - %d agências encontradas (cache)",
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), agencias.size());
+                return new AgenciaResponseDTO(message);
+            }
         }
 
-        String message = String.format("Consulta realizada às %s - %s agências encontradas",
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
-            agencias.size());
+        List<Agencia> agenciasList = agenciaRepository.findAll();
+        List<AgenciaDTO> agencias = agenciasList.stream()
+                .map(a -> new AgenciaDTO(a.getId(), a.getPosX(), a.getPosY()))
+                .collect(Collectors.toList());
 
+        redisTemplate.opsForValue().set(CACHE_KEY, agencias, CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+
+        if (renovarPorHits) {
+            redisTemplate.delete(COUNTER_KEY);
+        }
+
+        String message = String.format("Consulta realizada às %s - %d agências encontradas (fresh + cache)",
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), agencias.size());
         return new AgenciaResponseDTO(message);
     }
 
     private AgenciaResponseDTO consultarSemRedis() {
-        consultasCounter++;
-        boolean cacheRenovado = false;
-        List<AgenciaDTO> agencias;
+        long now = System.currentTimeMillis();
+        boolean cacheValido = memoryCache != null && (now - memoryCacheTime) < (CACHE_TIMEOUT_MINUTES * 60 * 1000) && consultasCounter < MAX_CONSULTAS;
 
-        // Verificar se cache em memória expirou (5 minutos)
-        long currentTime = System.currentTimeMillis();
-        boolean cacheExpirado = (currentTime - memoryCacheTime) > (CACHE_TIMEOUT_MINUTES * 60 * 1000);
-
-        if (consultasCounter >= MAX_CONSULTAS || memoryCache == null || cacheExpirado) {
-            agencias = renovarCacheMemoria();
-            cacheRenovado = true;
-            consultasCounter = 0;
-        } else {
-            agencias = memoryCache;
+        if (cacheValido) {
+            consultasCounter++;
+            String message = String.format("Consulta realizada às %s - %d agências encontradas (cache em memória)",
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), memoryCache.size());
+            return new AgenciaResponseDTO(message);
         }
 
-        String message = String.format("Consulta realizada às %s - %s agências encontradas (sem Redis)",
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
-            agencias.size());
+        List<Agencia> agenciasList = agenciaRepository.findAll();
+        memoryCache = agenciasList.stream()
+                .map(a -> new AgenciaDTO(a.getId(), a.getPosX(), a.getPosY()))
+                .collect(Collectors.toList());
 
+        memoryCacheTime = now;
+        consultasCounter = 1;
+
+        String message = String.format("Consulta realizada às %s - %d agências encontradas (sem Redis)",
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), memoryCache.size());
         return new AgenciaResponseDTO(message);
-    }
-
-    private List<AgenciaDTO> renovarCache() {
-        List<Agencia> agenciasList = agenciaRepository.findAll();
-        List<AgenciaDTO> agencias = agenciasList.stream()
-            .map(a -> new AgenciaDTO(a.getId(), a.getPosX(), a.getPosY()))
-            .collect(Collectors.toList());
-
-        if (redisTemplate != null) {
-            redisTemplate.opsForValue().set(CACHE_KEY, agencias, CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-        }
-
-        return agencias;
-    }
-
-    private List<AgenciaDTO> renovarCacheMemoria() {
-        List<Agencia> agenciasList = agenciaRepository.findAll();
-        List<AgenciaDTO> agencias = agenciasList.stream()
-            .map(a -> new AgenciaDTO(a.getId(), a.getPosX(), a.getPosY()))
-            .collect(Collectors.toList());
-
-        memoryCache = agencias;
-        memoryCacheTime = System.currentTimeMillis();
-
-        return agencias;
     }
 }

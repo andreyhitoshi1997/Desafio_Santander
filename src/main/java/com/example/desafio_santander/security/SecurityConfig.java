@@ -14,10 +14,18 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    @Value("${app.auth.username:admin}")
+    private String authUsername;
+
+    @Value("${app.auth.password:admin123}")
+    private String authPassword;
+
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
@@ -30,23 +38,24 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/autenticacao").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/desafio/**").authenticated()
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                .frameOptions(frameOptions -> frameOptions.disable())
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.builder()
-            .username("usuario")
-            .password(passwordEncoder().encode("senha123"))
+            .username(authUsername)
+            .password(passwordEncoder().encode(authPassword))
             .roles("USER")
             .build();
+
         return new InMemoryUserDetailsManager(user);
     }
 
@@ -56,7 +65,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

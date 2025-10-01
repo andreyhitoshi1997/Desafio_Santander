@@ -1,21 +1,23 @@
+package com.example.desafio_santander.service;
+
 import com.example.desafio_santander.dto.agencia.AgenciaDTO;
 import com.example.desafio_santander.dto.agencia.DistanciaResponseDTO;
 import com.example.desafio_santander.exception.DistanciaException;
 import com.example.desafio_santander.model.Agencia;
 import com.example.desafio_santander.repository.AgenciaRepository;
-import com.example.desafio_santander.service.DistanciaUseCase;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-class DistanciaCoreService implements DistanciaUseCase {
+public class DistanciaCoreService implements DistanciaUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(DistanciaCoreService.class);
     private final AgenciaRepository agenciaRepository;
@@ -29,7 +31,6 @@ class DistanciaCoreService implements DistanciaUseCase {
             throw new DistanciaException("Nenhuma agência encontrada para calcular distâncias");
         }
 
-        // Mapeia entidades → DTOs (simples; pode usar MapStruct se quiser)
         List<AgenciaDTO> agencias = agenciasList.stream()
                 .map(a -> new AgenciaDTO(a.getId(), a.getPosX(), a.getPosY()))
                 .toList();
@@ -48,7 +49,6 @@ class DistanciaCoreService implements DistanciaUseCase {
                         LinkedHashMap::new
                 ));
 
-        // Formata “distância = X.XX” apenas aqui (apresentação)
         Map<String, String> resposta = ordenado.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
