@@ -1,5 +1,7 @@
 package com.example.desafio_santander.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -8,10 +10,13 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@ConditionalOnClass(RedisConnectionFactory.class)
+@ConditionalOnProperty(name = "spring.data.redis.host", matchIfMissing = false)
 @EnableRedisRepositories(basePackages = "com.example.desafio_santander.repository")
 public class RedisConfig {
 
     @Bean
+    @ConditionalOnClass(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);

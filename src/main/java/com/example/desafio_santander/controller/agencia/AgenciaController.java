@@ -18,8 +18,23 @@ public class AgenciaController {
 
     @PostMapping("/cadastrar")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> cadastrarAgencia(@Valid @RequestBody AgenciaRequestDTO dto) {
-        String message = agenciaService.cadastrarAgencia(dto);
-        return ResponseEntity.ok(message);
+    public ResponseEntity<String> cadastrarAgencia(@Valid @RequestBody AgenciaRequestDTO agenciaRequest) {
+        try {
+            String message = agenciaService.cadastrarAgencia(agenciaRequest);
+            return ResponseEntity.ok(message);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao cadastrar agência: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/consultar")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<AgenciaResponseDTO> consultarAgencias() {
+        try {
+            AgenciaResponseDTO agenciaResponse = agenciaService.consultarAgencias();
+            return ResponseEntity.ok(agenciaResponse);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
