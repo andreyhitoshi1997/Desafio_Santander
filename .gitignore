@@ -1,0 +1,42 @@
+# Gradle build output
+/build/
+/build
+!gradle/wrapper/gradle-wrapper.jar
+
+# Gradle cache
+.gradle/
+
+# IDE files
+*.iml
+.idea/
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Java
+*.class
+
+# Environment files
+.env
+
+# Others
+out/
+
+# Ignore target directory (if present)
+target/
+
+# Ignore generated reports
+/reports/
+
+# Ignore test output
+/test-output/
+
+# Ignore node_modules (if using frontend)
+node_modules/
+
