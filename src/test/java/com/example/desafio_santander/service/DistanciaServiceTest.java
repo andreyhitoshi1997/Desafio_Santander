@@ -38,7 +38,7 @@ class DistanciaServiceTest {
     private ValueOperations<String, Object> valueOperations;
 
     @InjectMocks
-    private DistanciaService distanciaService;
+    private DistanciaCoreService distanciaService;
 
     @BeforeEach
     void setUp() {
