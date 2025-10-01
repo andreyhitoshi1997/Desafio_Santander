@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Iniciando aplicação Desafio Santander com Docker Compose (Ultra Otimizado)..."
+echo "🚀 Iniciando aplicação Desafio Santander com Docker Compose"
 
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
@@ -99,7 +99,6 @@ wait
 
 if [ "$app_ready" = true ]; then
     echo "🎉 APLICAÇÃO PRONTA!"
-    echo "⚡ Cold start ultra otimizado concluído"
     echo "🌐 http://localhost:8080"
 else
     echo "⚠️ Aplicação ainda inicializando..."

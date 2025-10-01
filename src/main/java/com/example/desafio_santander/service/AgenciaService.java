@@ -4,6 +4,7 @@ import com.example.desafio_santander.model.Agencia;
 import com.example.desafio_santander.dto.agencia.AgenciaDTO;
 import com.example.desafio_santander.dto.agencia.AgenciaRequestDTO;
 import com.example.desafio_santander.dto.agencia.AgenciaResponseDTO;
+import com.example.desafio_santander.exception.AgenciaCadastroException;
 import com.example.desafio_santander.repository.AgenciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -33,20 +34,26 @@ public class AgenciaService {
     private long memoryCacheTime = 0;
     private long consultasCounter = 0;
 
-    public String cadastrarAgencia(AgenciaRequestDTO dto) {
-        Agencia agencia = new Agencia(null, dto.getPosX(), dto.getPosY());
-        Agencia savedAgencia = agenciaRepository.save(agencia);
+    public AgenciaResponseDTO cadastrarAgencia(AgenciaRequestDTO dto) {
+        try {
+            Agencia agencia = new Agencia(null, dto.getPosX(), dto.getPosY());
+            Agencia savedAgencia = agenciaRepository.save(agencia);
 
-        // Limpar cache (Redis ou memória)
-        if (redisTemplate != null) {
-            redisTemplate.delete(CACHE_KEY);
-            redisTemplate.delete(COUNTER_KEY);
-        } else {
-            memoryCache = null;
-            consultasCounter = 0;
+            // Limpar cache (Redis ou memória)
+            if (redisTemplate != null) {
+                redisTemplate.delete(CACHE_KEY);
+                redisTemplate.delete(COUNTER_KEY);
+            } else {
+                memoryCache = null;
+                consultasCounter = 0;
+            }
+
+            String message = String.format("Agência cadastrada com sucesso, %s", savedAgencia.getId());
+
+            return new AgenciaResponseDTO(message);
+        } catch (Exception e) {
+            throw new AgenciaCadastroException("Erro ao salvar agência no banco de dados", e);
         }
-
-        return String.format("Agência cadastrada com sucesso, ID: %s", savedAgencia.getId());
     }
 
     public AgenciaResponseDTO consultarAgencias() {
@@ -80,7 +87,7 @@ public class AgenciaService {
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
             agencias.size());
 
-        return new AgenciaResponseDTO(agencias, message, cacheRenovado);
+        return new AgenciaResponseDTO(message);
     }
 
     private AgenciaResponseDTO consultarSemRedis() {
@@ -104,7 +111,7 @@ public class AgenciaService {
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
             agencias.size());
 
-        return new AgenciaResponseDTO(agencias, message, cacheRenovado);
+        return new AgenciaResponseDTO(message);
     }
 
     private List<AgenciaDTO> renovarCache() {

@@ -2,7 +2,9 @@ package com.example.desafio_santander.controller.agencia;
 
 import com.example.desafio_santander.dto.agencia.AgenciaRequestDTO;
 import com.example.desafio_santander.dto.agencia.AgenciaResponseDTO;
+import com.example.desafio_santander.dto.agencia.DistanciaResponseDTO;
 import com.example.desafio_santander.service.AgenciaService;
+import com.example.desafio_santander.service.DistanciaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,25 +18,22 @@ public class AgenciaController {
     @Autowired
     private AgenciaService agenciaService;
 
+    @Autowired
+    private DistanciaService distanciaService;
+
     @PostMapping("/cadastrar")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> cadastrarAgencia(@Valid @RequestBody AgenciaRequestDTO agenciaRequest) {
-        try {
-            String message = agenciaService.cadastrarAgencia(agenciaRequest);
-            return ResponseEntity.ok(message);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao cadastrar agência: " + e.getMessage());
-        }
+    public ResponseEntity<AgenciaResponseDTO> cadastrarAgencia(@Valid @RequestBody AgenciaRequestDTO agenciaRequest) {
+        AgenciaResponseDTO response = agenciaService.cadastrarAgencia(agenciaRequest);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/distancia")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<AgenciaResponseDTO> consultarAgencias() {
-        try {
-            AgenciaResponseDTO agenciaResponse = agenciaService.consultarAgencias();
-            return ResponseEntity.ok(agenciaResponse);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<DistanciaResponseDTO> consultarDistancias(
+            @RequestParam("posX") Integer posX,
+            @RequestParam("posY") Integer posY) {
+        DistanciaResponseDTO distanciaResponse = distanciaService.calcularDistancias(posX, posY);
+        return ResponseEntity.ok(distanciaResponse);
     }
 }
