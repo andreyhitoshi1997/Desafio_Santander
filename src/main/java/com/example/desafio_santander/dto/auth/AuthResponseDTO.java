@@ -1,4 +1,4 @@
-package com.example.desafio_santander.dto;
+package com.example.desafio_santander.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
