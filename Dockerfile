@@ -1,3 +1,4 @@
+
 # Use Eclipse Temurin OpenJDK 21 as base image
 FROM eclipse-temurin:21-jdk-alpine
 
