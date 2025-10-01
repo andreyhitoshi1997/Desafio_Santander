@@ -11,12 +11,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @ConditionalOnClass(RedisConnectionFactory.class)
-@ConditionalOnProperty(name = "spring.data.redis.host", matchIfMissing = false)
+@ConditionalOnProperty(name = "spring.data.redis.host")
 @EnableRedisRepositories(basePackages = "com.example.desafio_santander.repository")
 public class RedisConfig {
 
     @Bean
-    @ConditionalOnClass(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
