@@ -73,7 +73,6 @@ public class AgenciaService {
         if (temCache && !renovarPorHits) {
             Object cachedData = redisTemplate.opsForValue().get(CACHE_KEY);
             if (cachedData instanceof List<?> list) {
-                @SuppressWarnings("unchecked")
                 List<AgenciaDTO> agencias = (List<AgenciaDTO>) list;
                 String message = String.format("Consulta realizada às %s - %d agências encontradas (cache)",
                         LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), agencias.size());
